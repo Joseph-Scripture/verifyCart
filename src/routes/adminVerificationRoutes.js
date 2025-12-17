@@ -1,7 +1,7 @@
 import {Router} from 'express';
 import { getPendingVerificationItems } from '../controllers/adminVerificationController.js';
 import {protect, adminOnly} from '../Middleware/authMiddleware.js';
-
+import { reviewVerificationItem } from '../controllers/adminVerificationController.js'
 
 
 
@@ -11,7 +11,12 @@ router.get('/verification/pending',
     adminOnly,
     getPendingVerificationItems
 );
-
+router.patch(
+    '/verification/:id',
+    protect,
+    adminOnly,
+    reviewVerificationItem
+)
 
 
 export default router;
