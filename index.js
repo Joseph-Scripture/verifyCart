@@ -1,28 +1,31 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
-// const authRoutes = require('./src/routes/authRoutes'); 
-import {authRoutes} from './src/routes/authRoutes';
-import {vendorRoutes} from './src/routes/vendorRoutes';
-import {adminRoutes} from './src/routes/adminRoutes';
+// Load environment variables
+dotenv.config();
+
+// Importing Routes
+import authRoutes from './src/routes/authRoutes.js';
+import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser());
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/vendor', vendorRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/vendor', vendorVerificationRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.send('Verify-cart API is running');
-});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
