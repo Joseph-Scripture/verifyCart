@@ -13,7 +13,7 @@ export const protect = async (req, res, next) => {
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.id },
-            
+
             include: {
                 vendorProfile: true,
             },
@@ -37,5 +37,13 @@ export const vendorOnly = (req, res, next) => {
         next();
     } else {
         return res.status(403).json({ message: "Access denied: Vendors only" });
+    }
+};
+
+export const adminOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'ADMIN') {
+        next();
+    } else {
+        return res.status(403).json({ message: "Access denied: Admins only" });
     }
 };

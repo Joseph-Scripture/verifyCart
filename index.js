@@ -9,6 +9,7 @@ dotenv.config();
 // Importing Routes
 import authRoutes from './src/routes/authRoutes.js';
 import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
+import adminVerificationRoutes from './src/routes/adminVerificationRoutes.js';
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/vendor', vendorVerificationRoutes);
+app.use('/api/admin', adminVerificationRoutes);
 
 
 const PORT = process.env.PORT || 3000;
