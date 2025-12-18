@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 dotenv.config();
 
 // Importing Routes
-import authRoutes from './src/routes/authRoutes.js';
+import vendorAuthRoutes from './src/routes/vendorAuthRoutes.js';
 import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
 import adminVerificationRoutes from './src/routes/adminVerificationRoutes.js';
 
@@ -20,7 +20,7 @@ app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', vendorAuthRoutes);
 app.use('/api/vendor', vendorVerificationRoutes);
 app.use('/api/admin', adminVerificationRoutes);
 

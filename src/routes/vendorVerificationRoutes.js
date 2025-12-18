@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, vendorOnly } from '../Middleware/authMiddleware.js';
+import { protect, vendorOnly } from '../Middleware/vendorAuthMiddleware.js';
 import { upload } from '../Middleware/upload.js';
 import { submitVerificationItem } from '../controllers/vendorVerificationController.js';
 
