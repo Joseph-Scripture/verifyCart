@@ -1,54 +1,35 @@
 import prisma from '../config/db.js';
+import { VerificationType } from '@prisma/client';
 
 export const submitVerificationItem = async (req, res) => {
   const { type } = req.params;
-  const vendor = req.user.vendorProfile;
+  const vendor = req.vendor;
 
   if (!vendor) {
-    return res.status(403).json({ message: "Vendor profile not found" });
+    return res.status(403).json({ message: 'Vendor not authenticated' });
   }
 
   if (!req.file) {
-    return res.status(400).json({ message: "Document is required" });
+    return res.status(400).json({ message: 'Document is required' });
   }
 
-  const allowedTypes = ['REGISTRATION', 'ADDRESS', 'ID'];
-  if (!allowedTypes.includes(type)) {
-    return res.status(400).json({ message: "Invalid verification type" });
+  if (!Object.values(VerificationType).includes(type)) {
+    return res.status(400).json({ message: 'Invalid verification type' });
   }
 
-  const filePath = req.file.path;
+  const fileUrl = req.file.path;
 
-  // Upsert → latest state only
-  const item = await prisma.verificationItem.upsert({
-    where: {
-      vendorId_type: {
-        vendorId: vendor.id,
-        type,
-      },
-    },
-    update: {
-      value: filePath,
-      status: 'UNDER_REVIEW',
-      adminNote: null,
-    },
-    create: {
+  const item = await prisma.verificationItem.create({
+    data: {
       vendorId: vendor.id,
       type,
-      value: filePath,
-      status: 'UNDER_REVIEW',
+      fileUrl,
     },
   });
 
-  // Update vendor status
-  await prisma.vendorProfile.update({
-    where: { id: vendor.id },
-    data: { status: 'UNDER_REVIEW' },
-  });
-
-  res.status(200).json({
+  res.status(201).json({
     success: true,
-    message: "Document submitted successfully",
+    message: 'Document submitted successfully',
     item,
   });
 };

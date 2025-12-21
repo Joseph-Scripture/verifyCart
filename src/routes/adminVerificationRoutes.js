@@ -1,6 +1,8 @@
 import {Router} from 'express';
 import { getPendingVerificationItems } from '../controllers/adminVerificationController.js';
-import {protect, adminOnly} from '../Middleware/vendorAuthMiddleware.js';
+import protect from '../Middleware/protect.js';
+import adminOnly from '../Middleware/adminOnly.js';
+
 import { reviewVerificationItem } from '../controllers/adminVerificationController.js'
 
 

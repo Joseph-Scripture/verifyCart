@@ -77,3 +77,28 @@ export const  vendorLogout = async (req, res) => {
         message: 'Vendor logged out successfully',
     })
 } 
+
+export const adminLogin = async (req, res) => {
+const { email, password } = req.body;
+
+const admin = await prisma.admin.findUnique({
+    where: { email },
+});
+
+if (!admin) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+}
+
+const isMatch = await bcrypt.compare(password, admin.password);
+if (!isMatch) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+}
+
+const token = generateToken({ adminId: admin.id, type: 'ADMIN' }, res);
+
+return res.status(200).json({
+    success: true,
+    message: 'Admin logged in successfully',
+    token,
+});
+}
