@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import {rateLimit} from 'express-rate-limit'
 
 // Load environment variables
 dotenv.config();
@@ -10,6 +11,19 @@ dotenv.config();
 import vendorAuthRoutes from './src/routes/vendorAuthRoutes.js';
 import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
 import adminVerificationRoutes from './src/routes/adminVerificationRoutes.js';
+import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
+
+
+
+// rate limiting configuration
+
+const limiter = rateLimit({
+    windowsMs:60 * 60 * 1000,
+    limit:100,
+
+})
+
+app.use('/api', limiter)
 
 const app = express();
 
@@ -23,6 +37,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', vendorAuthRoutes);
 app.use('/api/vendor', vendorVerificationRoutes);
 app.use('/api/admin', adminVerificationRoutes);
+app.use('/api', vendorVerificationSummary);
 
 
 

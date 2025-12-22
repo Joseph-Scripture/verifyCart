@@ -33,3 +33,59 @@ export const submitVerificationItem = async (req, res) => {
     item,
   });
 };
+
+
+export const getVendorVerificationSummary = async (req, res) => {
+  const { vendorId } = req.params;
+
+  try {
+    // 1. Fetch vendor
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: {
+        id: true,
+        name: true,
+        businessName: true,
+        status: true,
+        trustScore: true,
+        badgeId: true,
+      },
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    // 2. Fetch latest verification items
+    const items = await prisma.verificationItem.findMany({
+      where: { vendorId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 3. Build summary map
+    const verification = {
+      ID: 'NOT_SUBMITTED',
+      ADDRESS: 'NOT_SUBMITTED',
+      REGISTRATION: 'NOT_SUBMITTED',
+    };
+
+    for (const item of items) {
+      if (!verification[item.type]) continue;
+      if (verification[item.type] === 'NOT_SUBMITTED') {
+        verification[item.type] = item.status;
+      }
+    }
+
+    // 4. Respond
+    res.status(200).json({
+      success: true,
+      vendor,
+      verification,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
