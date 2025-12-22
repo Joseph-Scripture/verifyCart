@@ -89,3 +89,46 @@ export const getVendorVerificationSummary = async (req, res) => {
   }
 };
 
+
+export const searchVendors = async (req, res) => {
+  const { q } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ message: 'Search query is required' });
+  }
+
+  try {
+    const vendors = await prisma.vendor.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { businessName: { contains: q, mode: 'insensitive' } },
+          {
+            socialLinks: {
+              path: [],
+              string_contains: q,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        businessName: true,
+        status: true,
+        trustScore: true,
+        badgeId: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: vendors.length,
+      results: vendors,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
