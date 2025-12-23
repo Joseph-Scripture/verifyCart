@@ -92,7 +92,7 @@ export const getVendorVerificationSummary = async (req, res) => {
 
 
 export const searchVendors = async (req, res) => {
-  const { q } = req.query;
+  const { q } = req.query.q?.trim();
 
   if (!q) {
     return res.status(400).json({ message: 'Search query is required' });

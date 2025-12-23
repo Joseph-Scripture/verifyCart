@@ -15,18 +15,12 @@ import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
 
 
 
-// rate limiting configuration
 
-const limiter = rateLimit({
-    windowMs:60 * 60 * 1000,
-    limit:100,
-
-})
 
 
 
 const app = express();
-app.use('/api', limiter)
+
 
 app.use(cors());
 app.use(express.json());

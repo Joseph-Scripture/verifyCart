@@ -3,12 +3,14 @@ import protect from '../Middleware/protect.js';
 
 import { upload } from '../Middleware/upload.js';
 import { submitVerificationItem } from '../controllers/vendorVerificationController.js';
+import {uploadLimiter} from '../Middleware/rateLimit.js'
 
 const router = express.Router();
 
 router.post(
   '/verification/:type',
   protect,
+  uploadLimiter,
   upload.single('document'),
   submitVerificationItem
 );
