@@ -3,42 +3,72 @@ import prisma from '../config/db.js';
 import generateToken from '../utils/generateToken.js';
 
 export const vendorSignup = async (req, res) => {
-    const {name, email, password, phone, businessName} = req.body; 
-    if (!name || !email || !password || !phone || !businessName) {
-        return res.status(400).json({ message: 'Please fill in all fields' });
-    }
+    const {
+    name,
+    email,
+    phone,
+    businessName,
+    password,
+    socialLinks,
+} = req.body;
+
     try {
-        const existingVendor = await prisma.vendor.findUnique({
-            where: {
-                email,
-            },
-        });
-        if (existingVendor) {
-            return res.status(400).json({ message: 'Vendor already exists' });
-        };
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const vendor = await prisma.vendor.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                phone,
-                businessName,
-            },
-        });
-        const token = generateToken({vendorId: vendor.id}, res);
-        return res.status(201).json({
-            success: true,
-            message: 'Vendor created successfully',
-            token,
-        });
-        
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
+    // Basic validation
+    if (!name || !email || !phone || !businessName || !password) {
+        return res.status(400).json({ message: 'All fields are required' });
     }
-    
+
+    if (
+        !socialLinks ||
+        typeof socialLinks !== 'object' ||
+        Object.keys(socialLinks).length === 0
+    ) {
+        return res.status(400).json({
+            message: 'At least one social link is required',
+        });
+    }
+
+    // Check existing vendor
+    const existingVendor = await prisma.vendor.findUnique({
+        where: { email },
+    });
+
+    if (existingVendor) {
+        return res.status(400).json({ message: 'Vendor already exists' });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create vendor
+    const vendor = await prisma.vendor.create({
+        data: {
+        name,
+        email,
+        phone,
+        businessName,
+        password: hashedPassword,
+        socialLinks,
+        },
+    });
+
+    // Issue JWT
+    const token = generateToken(vendor.id, res);
+
+    res.status(201).json({
+        success: true,
+        message: 'Vendor created successfully',
+        vendorId: vendor.id,
+        token,
+    });
+
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
 }
+};
+
 export const vendorLogin = async (req, res) => {
     const {email, password} = req.body;
     if(!email || !password){

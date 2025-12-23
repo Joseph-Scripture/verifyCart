@@ -90,6 +90,7 @@ export const getVendorVerificationSummary = async (req, res) => {
 };
 
 
+
 export const searchVendors = async (req, res) => {
   const { q } = req.query;
 
@@ -103,12 +104,10 @@ export const searchVendors = async (req, res) => {
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
           { businessName: { contains: q, mode: 'insensitive' } },
-          {
-            socialLinks: {
-              path: [],
-              string_contains: q,
-            },
-          },
+
+          { socialLinks: { path: ['instagram'], string_contains: q } },
+          { socialLinks: { path: ['twitter'], string_contains: q } },
+          { socialLinks: { path: ['website'], string_contains: q } },
         ],
       },
       select: {
@@ -126,7 +125,6 @@ export const searchVendors = async (req, res) => {
       count: vendors.length,
       results: vendors,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
