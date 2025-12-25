@@ -1,5 +1,7 @@
 import prisma from '../config/db.js';
-import {recalculateVendorVerificationState} from '../utils/recalculateVendorVerificationState.js'
+import {recalculateVendorVerificationState} from '../utils/recalculateVendorVerificationState.js';
+
+import { writeAuditlog } from '../utils/writeAuditlog.js';
 
 export const getPendingVerificationItems = async (req, res) => {
   try {
@@ -53,7 +55,7 @@ export const reviewVerificationItem = async (req, res) => {
       return res.status(404).json({ message: 'Verification item not found' });
     }
 
-    const updatedItem = await prisma.verificationItem.update({
+    await prisma.verificationItem.update({
       where: { id },
       data: {
         status: decision,
@@ -61,15 +63,34 @@ export const reviewVerificationItem = async (req, res) => {
       },
     });
 
-    const {trustScore, badgeIssued, status} = await recalculateVendorVerificationState(item.vendorId);
+    const result = await recalculateVendorVerificationState(item.vendorId);
+
+    await writeAuditlog({
+      data:{
+        admin:{
+          connect:{id:req.admin.id}
+        }
+      },
+      adminId: req.admin.id,
+      action:
+        decision === 'APPROVED'
+          ? 'APPROVE_VERIFICATION'
+          : 'REJECT_VERIFICATION',
+      targetType: 'VERIFICATION_ITEM',
+      targetId: item.id,
+      metadata: {
+        verificationType: item.type,
+        note,
+        resultingStatus: result.status,
+        trustScore: result.trustScore,
+        badgeIssued: result.badgeIssued,
+      },
+    });
 
     res.status(200).json({
       success: true,
       message: `Verification ${item.type} ${decision.toLowerCase()}`,
-      item: updatedItem,
-      trustScore,
-      badgeIssued,
-      status,
+      ...result,
     });
 
   } catch (error) {
