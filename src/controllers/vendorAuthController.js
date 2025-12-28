@@ -74,6 +74,7 @@ export const vendorLogin = async (req, res) => {
     if(!email || !password){
         return res.status(400).json({message: 'Please fill in all fields'})
     }
+    console.log(req.body)
     try {
         const vendor = await prisma.vendor.findUnique({
             where:{email},
@@ -81,10 +82,33 @@ export const vendorLogin = async (req, res) => {
         if(!vendor){
             return res.status(401).json({message: 'Invalid email or password'})
         }
+        if(vendor.lockUntil && vendor.lockUntil > new Date()){
+            return res.status(403).json({
+                message:"Account locked Try again later"
+            })
+        }
+
         const isMatch = await bcrypt.compare(password, vendor.password);
         if(!isMatch){
+            await prisma.vendor.update({
+                where:{id:vendor.id},
+                data:{
+                    failedLoginAttempts:{increment: 1},
+                    lockUntil:
+                    vendor.failedLoginAttempts + 1 >= 5
+                    ? new Date(Date.now() + 15 * 60 * 1000)
+                    :null
+                }
+            });
             return res.status(401).json({message: 'Invalid email or password'})
         }
+        await prisma.vendor.update({
+            where:{id:vendor.id},
+            data:{
+                failedLoginAttempts: 0,
+                lockUntil:null
+            }
+        })
         const token = generateToken({vendorId: vendor.id}, res);
         return res.status(200).json({
             success: true,

@@ -1,7 +1,7 @@
 import prisma from '../config/db.js';
 import {recalculateVendorVerificationState} from '../utils/recalculateVendorVerificationState.js';
 
-import { writeAuditlog } from '../utils/writeAuditlog.js';
+// import { writeAuditlog } from '../utils/writeAuditlog.js';
 
 export const getPendingVerificationItems = async (req, res) => {
   try {
@@ -38,6 +38,7 @@ export const getPendingVerificationItems = async (req, res) => {
   }
 };
 
+
 export const reviewVerificationItem = async (req, res) => {
   const { id } = req.params;
   const { decision, note } = req.body;
@@ -65,27 +66,23 @@ export const reviewVerificationItem = async (req, res) => {
 
     const result = await recalculateVendorVerificationState(item.vendorId);
 
-    await writeAuditlog({
-      data:{
-        admin:{
-          connect:{id:req.admin.id}
-        }
-      },
-      adminId: req.admin.id,
-      action:
-        decision === 'APPROVED'
-          ? 'APPROVE_VERIFICATION'
-          : 'REJECT_VERIFICATION',
-      targetType: 'VERIFICATION_ITEM',
-      targetId: item.id,
-      metadata: {
-        verificationType: item.type,
-        note,
-        resultingStatus: result.status,
-        trustScore: result.trustScore,
-        badgeIssued: result.badgeIssued,
-      },
-    });
+    // await writeAuditlog({
+    //   adminId: req.admin.id,
+    //   vendorId: item.vendorId,
+    //   action:
+    //     decision === 'APPROVED'
+    //       ? 'APPROVE_VERIFICATION'
+    //       : 'REJECT_VERIFICATION',
+    //   targetType: 'VERIFICATION_ITEM',
+    //   targetId: item.id,
+    //   metadata: {
+    //     verificationType: item.type,
+    //     note,
+    //     resultingStatus: result.status,
+    //     trustScore: result.trustScore,
+    //     badgeIssued: result.badgeIssued,
+    //   },
+    // });
 
     res.status(200).json({
       success: true,

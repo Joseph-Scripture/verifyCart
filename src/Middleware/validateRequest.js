@@ -4,7 +4,7 @@ export const validateRequest = (req, res, next) => {
     if(!errors.isEmpty()){
         return res.status(400).json({
             message:"validation failed",
-            errors:errors.array(),
+            errors:errors.array()[0],
         });
     }
     next()
