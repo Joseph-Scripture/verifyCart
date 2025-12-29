@@ -2,114 +2,180 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import generateToken from '../utils/generateToken.js';
 
+
+/**
+ * @swagger
+ * /api/auth/vendor/register:
+ *   post:
+ *     summary: Register a new vendor
+ *     tags: [Vendor Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - phone
+ *               - businessName
+ *               - socialLinks
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 example: jane@store.com
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 example: StrongPass123!
+ *               businessName:
+ *                 type: string
+ *               socialLinks:
+ *                 type: object
+ *                 example:
+ *                   instagram: https://instagram.com/store
+ *                   website: https://store.com
+ *     responses:
+ *       201:
+ *         description: Vendor created successfully
+ *       400:
+ *         description: validation error
+ */
+
+
 export const vendorSignup = async (req, res) => {
     const {
-    name,
-    email,
-    phone,
-    businessName,
-    password,
-    socialLinks,
-} = req.body;
-
-    try {
-    // Basic validation
-    if (!name || !email || !phone || !businessName || !password) {
-        return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    if (
-        !socialLinks ||
-        typeof socialLinks !== 'object' ||
-        Object.keys(socialLinks).length === 0
-    ) {
-        return res.status(400).json({
-            message: 'At least one social link is required',
-        });
-    }
-
-    // Check existing vendor
-    const existingVendor = await prisma.vendor.findUnique({
-        where: { email },
-    });
-
-    if (existingVendor) {
-        return res.status(400).json({ message: 'Vendor already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create vendor
-    const vendor = await prisma.vendor.create({
-        data: {
         name,
         email,
         phone,
         businessName,
-        password: hashedPassword,
+        password,
         socialLinks,
-        },
-    });
+    } = req.body;
 
-    // Issue JWT
-    const token = generateToken(vendor.id, res);
+    try {
+        if (!name || !email || !phone || !businessName || !password) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
 
-    res.status(201).json({
-        success: true,
-        message: 'Vendor created successfully',
-        vendorId: vendor.id,
-        token,
-    });
+        if (
+            !socialLinks ||
+            typeof socialLinks !== 'object' ||
+            Object.keys(socialLinks).length === 0
+        ) {
+            return res.status(400).json({
+                message: 'At least one social link is required',
+            });
+        }
 
-} catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-}
+        const existingVendor = await prisma.vendor.findUnique({
+            where: { email },
+        });
+
+        if (existingVendor) {
+            return res.status(400).json({ message: 'Vendor already exists' });
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const vendor = await prisma.vendor.create({
+            data: {
+                name,
+                email,
+                phone,
+                businessName,
+                password: hashedPassword,
+                socialLinks,
+            },
+        });
+
+        const token = generateToken(vendor.id, res);
+
+        res.status(201).json({
+            success: true,
+            message: 'Vendor created successfully',
+            vendorId: vendor.id,
+            token,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
 
+/** 
+ * @swagger
+ * /api/auth/vendor/login:
+ *   post:
+ *     summary: Vendor Login
+ *     tags: [Vendor Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Invalid Credentials
+ */
+
+
+
+
 export const vendorLogin = async (req, res) => {
-    const {email, password} = req.body;
-    if(!email || !password){
-        return res.status(400).json({message: 'Please fill in all fields'})
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Please fill in all fields' })
     }
     console.log(req.body)
     try {
         const vendor = await prisma.vendor.findUnique({
-            where:{email},
+            where: { email },
         });
-        if(!vendor){
-            return res.status(401).json({message: 'Invalid email or password'})
+        if (!vendor) {
+            return res.status(401).json({ message: 'Invalid email or password' })
         }
-        if(vendor.lockUntil && vendor.lockUntil > new Date()){
+        if (vendor.lockUntil && vendor.lockUntil > new Date()) {
             return res.status(403).json({
-                message:"Account locked Try again later"
+                message: "Account locked Try again later"
             })
         }
 
         const isMatch = await bcrypt.compare(password, vendor.password);
-        if(!isMatch){
+        if (!isMatch) {
             await prisma.vendor.update({
-                where:{id:vendor.id},
-                data:{
-                    failedLoginAttempts:{increment: 1},
+                where: { id: vendor.id },
+                data: {
+                    failedLoginAttempts: { increment: 1 },
                     lockUntil:
-                    vendor.failedLoginAttempts + 1 >= 5
-                    ? new Date(Date.now() + 15 * 60 * 1000)
-                    :null
+                        vendor.failedLoginAttempts + 1 >= 5
+                            ? new Date(Date.now() + 15 * 60 * 1000)
+                            : null
                 }
             });
-            return res.status(401).json({message: 'Invalid email or password'})
+            return res.status(401).json({ message: 'Invalid email or password' })
         }
         await prisma.vendor.update({
-            where:{id:vendor.id},
-            data:{
+            where: { id: vendor.id },
+            data: {
                 failedLoginAttempts: 0,
-                lockUntil:null
+                lockUntil: null
             }
         })
-        const token = generateToken({vendorId: vendor.id}, res);
+        const token = generateToken({ vendorId: vendor.id }, res);
         return res.status(200).json({
             success: true,
             message: 'Vendor logged in successfully',
@@ -121,7 +187,7 @@ export const vendorLogin = async (req, res) => {
     }
 }
 
-export const  vendorLogout = async (req, res) => {
+export const vendorLogout = async (req, res) => {
     res.cookie('jwt', '', {
         httpOnly: true,
         expires: new Date(0),
@@ -130,29 +196,29 @@ export const  vendorLogout = async (req, res) => {
         success: true,
         message: 'Vendor logged out successfully',
     })
-} 
+}
 
 export const adminLogin = async (req, res) => {
-const { email, password } = req.body;
+    const { email, password } = req.body;
 
-const admin = await prisma.admin.findUnique({
-    where: { email },
-});
+    const admin = await prisma.admin.findUnique({
+        where: { email },
+    });
 
-if (!admin) {
-    return res.status(401).json({ message: 'Invalid credentials' });
-}
+    if (!admin) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-const isMatch = await bcrypt.compare(password, admin.password);
-if (!isMatch) {
-    return res.status(401).json({ message: 'Invalid credentials' });
-}
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-const token = generateToken({ adminId: admin.id, type: 'ADMIN' }, res);
+    const token = generateToken({ adminId: admin.id, type: 'ADMIN' }, res);
 
-return res.status(200).json({
-    success: true,
-    message: 'Admin logged in successfully',
-    token,
-});
+    return res.status(200).json({
+        success: true,
+        message: 'Admin logged in successfully',
+        token,
+    });
 }
