@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import {rateLimit} from 'express-rate-limit'
-
+import swaggerUi from 'swagger-ui-express';
+import {swaggerSpec} from './src/docs/swagger.js'
 // Load environment variables
 dotenv.config();
 
@@ -18,8 +18,10 @@ import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
 
 
 
-
 const app = express();
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 
 app.use(cors());
