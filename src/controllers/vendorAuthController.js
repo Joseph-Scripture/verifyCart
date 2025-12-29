@@ -110,7 +110,7 @@ export const vendorSignup = async (req, res) => {
     }
 };
 
-/** 
+/**
  * @swagger
  * /api/auth/vendor/login:
  *   post:
@@ -125,11 +125,20 @@ export const vendorSignup = async (req, res) => {
  *             required:
  *               - email
  *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: jane@store.com
+ *               password:
+ *                 type: string
+ *                 example: StrongPass123!
  *     responses:
  *       200:
  *         description: Login successful
  *       400:
  *         description: Invalid Credentials
+ *       500:
+ *         description: Internal server error
  */
 
 
@@ -140,7 +149,6 @@ export const vendorLogin = async (req, res) => {
     if (!email || !password) {
         return res.status(400).json({ message: 'Please fill in all fields' })
     }
-    console.log(req.body)
     try {
         const vendor = await prisma.vendor.findUnique({
             where: { email },
@@ -186,7 +194,16 @@ export const vendorLogin = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 }
-
+/**
+ * @swagger
+ * /api/vendor/logout:
+ *   post:
+ *     summary: Vendor Logout
+ *     tags: [Vendor Auth]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
 export const vendorLogout = async (req, res) => {
     res.cookie('jwt', '', {
         httpOnly: true,
@@ -198,27 +215,55 @@ export const vendorLogout = async (req, res) => {
     })
 }
 
+/** 
+ * @swagger
+ * /api/admin/login:
+ *   post:
+ *     summary: Admin Login
+ *     tags: [Admin Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       500:
+ *         description: Internal server error
+ */
+
 export const adminLogin = async (req, res) => {
     const { email, password } = req.body;
+    try {
+        const admin = await prisma.admin.findUnique({
+            where: { email },
+        });
 
-    const admin = await prisma.admin.findUnique({
-        where: { email },
-    });
+        if (!admin) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
 
-    if (!admin) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        const token = generateToken({ adminId: admin.id, type: 'ADMIN' }, res);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Admin logged in successfully',
+            token,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
     }
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = generateToken({ adminId: admin.id, type: 'ADMIN' }, res);
-
-    return res.status(200).json({
-        success: true,
-        message: 'Admin logged in successfully',
-        token,
-    });
 }
