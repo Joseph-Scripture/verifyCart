@@ -196,7 +196,7 @@ export const vendorLogin = async (req, res) => {
 }
 /**
  * @swagger
- * /api/vendor/logout:
+ * /api/auth/vendor/logout:
  *   post:
  *     summary: Vendor Logout
  *     tags: [Vendor Auth]
@@ -217,7 +217,7 @@ export const vendorLogout = async (req, res) => {
 
 /** 
  * @swagger
- * /api/admin/login:
+ * /api/auth/admin/login:
  *   post:
  *     summary: Admin Login
  *     tags: [Admin Auth]

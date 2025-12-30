@@ -1,7 +1,7 @@
 import prisma from '../config/db.js';
 import { recalculateVendorVerificationState } from '../utils/recalculateVendorVerificationState.js';
 
-// import { writeAuditlog } from '../utils/writeAuditlog.js';
+import { writeAuditlog } from '../utils/writeAuditlog.js';
 
 /**
  * @swagger
@@ -135,23 +135,23 @@ export const reviewVerificationItem = async (req, res) => {
 
     const result = await recalculateVendorVerificationState(item.vendorId);
 
-    // await writeAuditlog({
-    //   adminId: req.admin.id,
-    //   vendorId: item.vendorId,
-    //   action:
-    //     decision === 'APPROVED'
-    //       ? 'APPROVE_VERIFICATION'
-    //       : 'REJECT_VERIFICATION',
-    //   targetType: 'VERIFICATION_ITEM',
-    //   targetId: item.id,
-    //   metadata: {
-    //     verificationType: item.type,
-    //     note,
-    //     resultingStatus: result.status,
-    //     trustScore: result.trustScore,
-    //     badgeIssued: result.badgeIssued,
-    //   },
-    // });
+    await writeAuditlog({
+      adminId: req.admin.id,
+      vendorId: item.vendorId,
+      action:
+        decision === 'APPROVED'
+          ? 'APPROVE_VERIFICATION'
+          : 'REJECT_VERIFICATION',
+      targetType: 'VERIFICATION_ITEM',
+      targetId: item.id,
+      metadata: {
+        verificationType: item.type,
+        note,
+        resultingStatus: result.status,
+        trustScore: result.trustScore,
+        badgeIssued: result.badgeIssued,
+      },
+    });
 
     res.status(200).json({
       success: true,

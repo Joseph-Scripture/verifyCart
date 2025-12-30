@@ -32,3 +32,13 @@ export const adminLimiter = rateLimit ({
         message:"Too many admin requests",
     }
 })
+
+export const reviewRateLimit = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    standardHeaders:true,
+    legacyHeaders: false,
+    message: {
+        message:"Too many reviews submitted. Please try again later"
+    }
+})

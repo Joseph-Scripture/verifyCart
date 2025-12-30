@@ -13,6 +13,7 @@ import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
 import adminVerificationRoutes from './src/routes/adminVerificationRoutes.js';
 import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
 
+import reviewRoutes from './src/routes/reviewRoutes.js'
 
 
 
@@ -34,7 +35,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', vendorAuthRoutes);
 app.use('/api/vendor', vendorVerificationRoutes);
 app.use('/api/admin', adminVerificationRoutes);
-app.use('/api/vendors', vendorVerificationSummary);
+app.use('/api/vendor', vendorVerificationSummary);
+app.use('/api/review', reviewRoutes)
 
 
 

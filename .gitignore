@@ -2,3 +2,5 @@
 node_modules
 prisma
 .env
+.env.example
+prisma/seed.js

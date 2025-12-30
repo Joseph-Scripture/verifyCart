@@ -68,7 +68,7 @@ export const submitVerificationItem = async (req, res) => {
 
 /**
  * @swagger
- * /api/vendors/{vendorId}/summary:
+ * /api/vendor/summary/{vendorId}:
  *   get:
  *     summary: Get verification summary for a vendor
  *     tags: [Public Vendor Info]
@@ -101,16 +101,20 @@ export const getVendorVerificationSummary = async (req, res) => {
   const { vendorId } = req.params;
 
   try {
-    // 1. Fetch vendor
+    // 1. Fetch vendor core info
     const vendor = await prisma.vendor.findUnique({
       where: { id: vendorId },
       select: {
         id: true,
         name: true,
         businessName: true,
+        email: true,
+        phone: true,
+        socialLinks: true,
         status: true,
         trustScore: true,
         badgeId: true,
+        createdAt: true,
       },
     });
 
@@ -118,13 +122,10 @@ export const getVendorVerificationSummary = async (req, res) => {
       return res.status(404).json({ message: 'Vendor not found' });
     }
 
-    // 2. Fetch latest verification items
     const items = await prisma.verificationItem.findMany({
-      where: { vendorId },
+      where: { vendorId: vendor.id },
       orderBy: { createdAt: 'desc' },
     });
-
-    // 3. Build summary map
     const verification = {
       ID: 'NOT_SUBMITTED',
       ADDRESS: 'NOT_SUBMITTED',
@@ -132,17 +133,39 @@ export const getVendorVerificationSummary = async (req, res) => {
     };
 
     for (const item of items) {
-      if (!verification[item.type]) continue;
       if (verification[item.type] === 'NOT_SUBMITTED') {
         verification[item.type] = item.status;
       }
     }
 
-    // 4. Respond
+    const reviews = await prisma.review.findMany({
+      where: { vendorId: vendor.id },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        reviewer: true,
+        rating: true,
+        comment: true,
+        createdAt: true,
+      },
+    });
+
+    const avgRating =
+      reviews.length > 0
+        ? (
+          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        ).toFixed(1)
+        : null;
+
     res.status(200).json({
       success: true,
-      vendor,
+      vendor: {
+        ...vendor,
+        averageRating: avgRating,
+        reviewCount: reviews.length,
+      },
       verification,
+      reviews,
     });
 
   } catch (error) {
@@ -182,15 +205,17 @@ export const getVendorVerificationSummary = async (req, res) => {
  *                   type: array
  *                   items:
  *                     type: object
+ *      
+ *                      
  *       400:
  *         description: Missing search query
  *       500:
  *         description: Internal server error
  */
 export const searchVendors = async (req, res) => {
-  const { q } = req.query.q?.trim();
+  const query = req.query.q?.trim();
 
-  if (!q) {
+  if (!query) {
     return res.status(400).json({ message: 'Search query is required' });
   }
 
@@ -198,12 +223,12 @@ export const searchVendors = async (req, res) => {
     const vendors = await prisma.vendor.findMany({
       where: {
         OR: [
-          { name: { contains: q, mode: 'insensitive' } },
-          { businessName: { contains: q, mode: 'insensitive' } },
+          { name: { contains: query, mode: 'insensitive' } },
+          { businessName: { contains: query, mode: 'insensitive' } },
 
-          { socialLinks: { path: ['instagram'], string_contains: q } },
-          { socialLinks: { path: ['twitter'], string_contains: q } },
-          { socialLinks: { path: ['website'], string_contains: q } },
+          { socialLinks: { path: ['instagram'], string_contains: query } },
+          { socialLinks: { path: ['twitter'], string_contains: query } },
+          { socialLinks: { path: ['website'], string_contains: query } },
         ],
       },
       select: {
@@ -213,6 +238,8 @@ export const searchVendors = async (req, res) => {
         status: true,
         trustScore: true,
         badgeId: true,
+        socialLinks: true,
+
       },
     });
 
