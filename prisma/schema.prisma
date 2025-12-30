@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vendor {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  phone        String
+  password     String
+  businessName String
+
+  socialLinks         Json
+  failedLoginAttempts Int       @default(0)
+  lockUntil           DateTime?
+
+  status     VendorStatus @default(NOT_SUBMITTED)
+  trustScore Int          @default(0)
+  badgeId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  verificationItems VerificationItem[]
+  auditLogs         AuditLog[]
+  reviews           Review[]
+  analyticsEvents   AnalyticsEvent[]
+
+  @@index([name])
+  @@index([businessName])
+  @@index([status])
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  auditLogs AuditLog[]
+}
+
+model VerificationItem {
+  id        String             @id @default(uuid())
+  vendorId  String
+  type      VerificationType
+  fileUrl   String
+  status    VerificationStatus @default(PENDING)
+  adminNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, type])
+  @@index([vendorId])
+}
+
+model Review {
+  id        String       @id @default(uuid())
+  vendorId  String
+  rating    Int // 1–5
+  comment   String
+  reviewer  String?
+  adminNote String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String          @id @default(uuid())
+  adminId    String
+  vendorId   String
+  action     AuditAction
+  targetType AuditTargetType
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  admin  Admin   @relation(fields: [adminId], references: [id])
+  vendor Vendor? @relation(fields: [vendorId], references: [id])
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([vendorId])
+}
+
+// BADGE CLICKS
+model AnalyticsEvent {
+  id        String             @id @default(uuid())
+  vendorId  String
+  type      AnalyticsEventType
+  source    AnalyticsSource?
+  metadata  Json?
+  createdAt DateTime           @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum VendorStatus {
+  NOT_SUBMITTED
+  PARTIALLY_VERIFIED
+  VERIFIED
+  REVOKED
+}
+
+enum VerificationType {
+  ID
+  ADDRESS
+  REGISTRATION
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AuditAction {
+  APPROVE_VERIFICATION
+  REJECT_VERIFICATION
+  ISSUE_BADGE
+  UPDATE_VENDOR_STATUS
+  REVOKE_VENDOR
+
+  APPROVE_REVIEW
+  REJECT_REVIEW
+  HIDE_REVIEW
+}
+
+enum AuditTargetType {
+  VENDOR
+  VERIFICATION_ITEM
+  REVIEW
+}
+
+enum ReviewStatus {
+  PENDING
+  VISIBLE
+  HIDDEN
+  REJECTED
+}
+
+enum AnalyticsEventType {
+  PROFILE_VIEW
+  BADGE_CLICK
+}
+
+enum AnalyticsSource {
+  INSTAGRAM
+  WHATSAPP
+  FACEBOOK
+  WEBSITE
+  DIRECT
+  TIKTOK
+}
