@@ -12,7 +12,8 @@ import vendorAuthRoutes from './src/routes/vendorAuthRoutes.js';
 import vendorVerificationRoutes from './src/routes/vendorVerificationRoutes.js';
 import adminVerificationRoutes from './src/routes/adminVerificationRoutes.js';
 import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
-
+import publicAnalyticsRoutes from './src/routes/publicAnalyticsRoutes.js'
+import vendorAnalyticsRoutes from './src/routes/vendorAnalytics.js'
 import reviewRoutes from './src/routes/reviewRoutes.js'
 
 
@@ -37,6 +38,8 @@ app.use('/api/vendor', vendorVerificationRoutes);
 app.use('/api/admin', adminVerificationRoutes);
 app.use('/api/vendor', vendorVerificationSummary);
 app.use('/api/review', reviewRoutes)
+app.use('/api/', publicAnalyticsRoutes)
+app.use('/api/vendor', vendorAnalyticsRoutes)
 
 
 

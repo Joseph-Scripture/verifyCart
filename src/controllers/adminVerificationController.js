@@ -264,3 +264,68 @@ export const moderateReview = async (req, res) => {
     review: updatedReview,
   });
 };
+
+/**
+ * @swagger
+ * /api/admin/vendor/{vendorId}/revoke:
+ *   patch:
+ *     summary: Revoke a vendor's verified status/badge
+ *     tags: [Admin Verification]
+ *     parameters:
+ *       - in: path
+ *         name: vendorId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vendor ID
+ *     responses:
+ *       200:
+ *         description: Vendor revoked successfully
+ *       404:
+ *         description: Vendor not found
+ *       500:
+ *         description: Internal server error
+ */
+export const revokeVendor = async (req, res) => {
+  const { vendorId } = req.params;
+
+  try {
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: vendorId },
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    const updatedVendor = await prisma.vendor.update({
+      where: { id: vendorId },
+      data: {
+        status: 'NOT_SUBMITTED',
+        trustScore: 0,
+        badgeId: null,
+      },
+    });
+
+    await writeAuditlog({
+      adminId: req.admin.id,
+      vendorId: vendor.id,
+      action: 'REVOKE_VENDOR',
+      targetType: 'VENDOR',
+      targetId: vendor.id,
+      metadata: {
+        reason: 'Admin revoked status',
+        previousStatus: vendor.status,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Vendor status revoked',
+      vendor: updatedVendor,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

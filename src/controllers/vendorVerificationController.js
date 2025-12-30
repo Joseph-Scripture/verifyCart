@@ -121,6 +121,24 @@ export const getVendorVerificationSummary = async (req, res) => {
     if (!vendor) {
       return res.status(404).json({ message: 'Vendor not found' });
     }
+    const validSources = ['INSTAGRAM', 'WHATSAPP', 'FACEBOOK', 'WEBSITE', 'DIRECT', 'TIKTOK'];
+    let sourceInput = req.query.source || req.query.ref || 'DIRECT';
+    sourceInput = sourceInput.toUpperCase();
+
+    const source = validSources.includes(sourceInput) ? sourceInput : 'DIRECT';
+    const eventType = (sourceInput === 'BADGE') ? 'BADGE_CLICK' : 'PROFILE_VIEW';
+
+    await prisma.analyticsEvent.create({
+      data: {
+        vendorId,
+        type: eventType,
+        source: source,
+        metadata: {
+          referrer: req.get('referer') || null,
+          userAgent: req.get('user-agent'),
+        },
+      },
+    });
 
     const items = await prisma.verificationItem.findMany({
       where: { vendorId: vendor.id },

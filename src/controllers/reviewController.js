@@ -53,7 +53,7 @@ import prisma from "../config/db.js";
  */
 export const submitReview = async (req, res) => {
     const { vendorId } = req.params;
-    const { rating, comment } = req.body;
+    const { rating, comment, reviewer } = req.body;
 
     if (rating < 1 || rating > 5) {
         return res.status(400).json({ message: 'Rating must be between 1 and 5' });
@@ -65,6 +65,7 @@ export const submitReview = async (req, res) => {
                 vendorId,
                 rating,
                 comment,
+                reviewer:reviewer || 'Anonymous',
                 status: 'PENDING',
             },
         });
