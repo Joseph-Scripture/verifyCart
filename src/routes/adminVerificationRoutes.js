@@ -1,9 +1,7 @@
 import {Router} from 'express';
-import { getPendingVerificationItems } from '../controllers/adminVerificationController.js';
+import { getPendingVerificationItems, reviewVerificationItem, moderateReview } from '../controllers/adminVerificationController.js';
 import protect from '../Middleware/protect.js';
 import adminOnly from '../Middleware/adminOnly.js';
-
-import { reviewVerificationItem } from '../controllers/adminVerificationController.js'
 
 
 
@@ -18,6 +16,12 @@ router.patch(
     protect,
     adminOnly,
     reviewVerificationItem
+)
+router.patch(
+    '/review/:reviewId',
+    protect,
+    adminOnly,
+    moderateReview
 )
 
 

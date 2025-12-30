@@ -139,7 +139,7 @@ export const getVendorVerificationSummary = async (req, res) => {
     }
 
     const reviews = await prisma.review.findMany({
-      where: { vendorId: vendor.id },
+      where: { vendorId: vendor.id, status: 'VISIBLE' },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: {
