@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
-import {swaggerSpec} from './src/docs/swagger.js'
+import { swaggerSpec } from './src/docs/swagger.js'
 // Load environment variables
 dotenv.config();
 
@@ -26,7 +26,15 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 
-app.use(cors());
+const allowedOrigins = [
+    'https://verifycart.vercel.app',
+    'http://localhost:5173'
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser());
