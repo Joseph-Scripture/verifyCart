@@ -228,7 +228,7 @@ export const getVendorVerificationSummary = async (req, res) => {
 
 /**
  * @swagger
- * /api/vendors/search:
+ * /api/vendor/search:
  *   get:
  *     summary: Search for vendors
  *     tags: [Public Vendor Info]
