@@ -16,6 +16,7 @@ import publicAnalyticsRoutes from './src/routes/publicAnalyticsRoutes.js'
 import vendorAnalyticsRoutes from './src/routes/vendorAnalytics.js'
 import reviewRoutes from './src/routes/reviewRoutes.js'
 import vendorProfileRoutes from './src/routes/vendorProfileRoutes.js'
+import passwordResetRoutes from './src/routes/passwordResetRoutes.js'
 
 
 
@@ -50,6 +51,7 @@ app.use('/api/review', reviewRoutes)
 app.use('/api/', publicAnalyticsRoutes)
 app.use('/api/vendor', vendorAnalyticsRoutes)
 app.use('/api/vendor', vendorProfileRoutes)
+app.use('/api/auth', passwordResetRoutes)
 
 
 

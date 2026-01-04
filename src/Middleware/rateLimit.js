@@ -42,3 +42,12 @@ export const reviewRateLimit = rateLimit({
         message:"Too many reviews submitted. Please try again later"
     }
 })
+export const resetRateLimit = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 5,
+    standardHeaders:true,
+    legacyHeaders: false,
+    message: {
+        message:"Too many reset requests. Please try again later"
+    }
+})

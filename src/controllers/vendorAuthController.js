@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import generateToken from '../utils/generateToken.js';
+import nodemailer from 'nodemailer';
+
 
 /**
  * @swagger
@@ -266,3 +268,5 @@ export const adminLogin = async (req, res) => {
     }
 
 }
+
+
