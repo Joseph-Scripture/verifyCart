@@ -15,6 +15,7 @@ import vendorVerificationSummary from './src/routes/publicVendorRoutes.js'
 import publicAnalyticsRoutes from './src/routes/publicAnalyticsRoutes.js'
 import vendorAnalyticsRoutes from './src/routes/vendorAnalytics.js'
 import reviewRoutes from './src/routes/reviewRoutes.js'
+import vendorProfileRoutes from './src/routes/vendorProfileRoutes.js'
 
 
 
@@ -48,6 +49,7 @@ app.use('/api/vendor', vendorVerificationSummary);
 app.use('/api/review', reviewRoutes)
 app.use('/api/', publicAnalyticsRoutes)
 app.use('/api/vendor', vendorAnalyticsRoutes)
+app.use('/api/vendor', vendorProfileRoutes)
 
 
 

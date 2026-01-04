@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import generateToken from '../utils/generateToken.js';
 
-
 /**
  * @swagger
  * /api/auth/vendor/register:
@@ -95,7 +94,7 @@ export const vendorSignup = async (req, res) => {
             },
         });
 
-        const token = generateToken(vendor.id, res);
+        const token = generateToken({ vendorId: vendor.id, name: vendor.name }, res);
 
         res.status(201).json({
             success: true,
@@ -143,7 +142,6 @@ export const vendorSignup = async (req, res) => {
 
 
 
-
 export const vendorLogin = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -183,12 +181,12 @@ export const vendorLogin = async (req, res) => {
                 lockUntil: null
             }
         })
-        const token = generateToken({ vendorId: vendor.id }, res);
+        const token = generateToken({ vendorId: vendor.id, name: vendor.name }, res);
         return res.status(200).json({
             success: true,
             message: 'Vendor logged in successfully',
             token,
-            vendorId:vendor.id
+            vendorId: vendor.id
         })
     } catch (error) {
         console.error(error);

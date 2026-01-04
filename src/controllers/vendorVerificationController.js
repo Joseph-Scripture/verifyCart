@@ -48,15 +48,47 @@ export const submitVerificationItem = async (req, res) => {
     return res.status(400).json({ message: 'Invalid verification type' });
   }
 
-  const fileUrl = req.file.path;
-
-  const item = await prisma.verificationItem.create({
-    data: {
-      vendorId: vendor.id,
-      type,
-      fileUrl,
+  const existingItem = await prisma.verificationItem.findUnique({
+    where: {
+      vendorId_type: {
+        vendorId: vendor.id,
+        type,
+      },
     },
   });
+
+  let item;
+  const fileUrl = req.file.path;
+
+  if (existingItem) {
+    if (existingItem.status === 'APPROVED' && vendor.status !== 'REVOKED') {
+      return res.status(400).json({
+        message: 'This document has already been verified and cannot be resubmitted',
+      });
+    }
+
+    if (existingItem.status === 'PENDING') {
+      return res.status(400).json({
+        message: 'This document is already under review',
+      });
+    }
+
+    item = await prisma.verificationItem.update({
+      where: { id: existingItem.id },
+      data: {
+        fileUrl,
+        status: 'PENDING',
+      },
+    });
+  } else {
+    item = await prisma.verificationItem.create({
+      data: {
+        vendorId: vendor.id,
+        type,
+        fileUrl,
+      },
+    });
+  }
 
   res.status(201).json({
     success: true,
