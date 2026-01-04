@@ -30,7 +30,8 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const allowedOrigins = [
     'https://verifycart.vercel.app',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://verify-chart-k8gq.vercel.app'
 ];
 
 app.use(cors({
