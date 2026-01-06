@@ -51,3 +51,12 @@ export const resetRateLimit = rateLimit({
         message:"Too many reset requests. Please try again later"
     }
 })
+export const profileUploadLimiter = rateLimit({
+    windowMs: 10 * 60 * 60,
+    max:10,
+    standardHeaders:true,
+    legacyHeaders: false,
+    message: {
+        message:"Too many profile uploads. Please try again later"
+    }
+})

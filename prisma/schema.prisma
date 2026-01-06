@@ -23,6 +23,9 @@ model Vendor {
   trustScore Int          @default(0)
   badgeId    String?
 
+  profileImage String?
+  bannerImage String?
+
   resetCode   String?
   resetCodeExpiresAt  DateTime?
 
