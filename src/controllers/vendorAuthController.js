@@ -22,6 +22,7 @@ import nodemailer from 'nodemailer';
  *               - phone
  *               - businessName
  *               - socialLinks
+ *               - password
  *             properties:
  *               name:
  *                 type: string
