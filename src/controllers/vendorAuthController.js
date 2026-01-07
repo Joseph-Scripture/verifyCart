@@ -189,7 +189,14 @@ export const vendorLogin = async (req, res) => {
             success: true,
             message: 'Vendor logged in successfully',
             token,
-            vendorId: vendor.id
+            vendorId: vendor.id,
+            vendorName: vendor.name,
+            vendorStatus: vendor.status,
+            vendorTrustScore:vendor.trustScore,
+            vendorBadgeId:vendor.badgeId,
+            vendorProfileImage:vendor.profileImage,
+            vendorBannerImage:vendor.bannerImage,
+            
         })
     } catch (error) {
         console.error(error);
