@@ -24,10 +24,10 @@ model Vendor {
   badgeId    String?
 
   profileImage String?
-  bannerImage String?
+  bannerImage  String?
 
-  resetCode   String?
-  resetCodeExpiresAt  DateTime?
+  resetCode          String?
+  resetCodeExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -120,6 +120,7 @@ model AnalyticsEvent {
 
 enum VendorStatus {
   NOT_SUBMITTED
+  PENDING
   PARTIALLY_VERIFIED
   VERIFIED
   REVOKED

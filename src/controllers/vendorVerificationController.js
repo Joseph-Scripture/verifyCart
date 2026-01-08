@@ -101,6 +101,7 @@ export const submitVerificationItem = async (req, res) => {
     success: true,
     message: 'Document submitted successfully',
     item,
+    vendorStatus:vendor.status,
   });
 };
 

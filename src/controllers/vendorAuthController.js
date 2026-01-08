@@ -196,7 +196,7 @@ export const vendorLogin = async (req, res) => {
             vendorBadgeId:vendor.badgeId,
             vendorProfileImage:vendor.profileImage,
             vendorBannerImage:vendor.bannerImage,
-            
+
         })
     } catch (error) {
         console.error(error);
