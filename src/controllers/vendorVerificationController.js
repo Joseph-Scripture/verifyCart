@@ -88,6 +88,13 @@ export const submitVerificationItem = async (req, res) => {
         fileUrl,
       },
     });
+
+    if (vendor.status === 'NOT_SUBMITTED') {
+      await prisma.vendor.update({
+        where: { id: vendor.id },
+        data: { status: 'PENDING' },
+      });
+    }
   }
 
   res.status(201).json({
