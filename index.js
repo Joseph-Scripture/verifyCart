@@ -34,13 +34,22 @@ const allowedOrigins = [
     'https://verify-chart-k8gq.vercel.app'
 ];
 
+app.set('trust proxy', 1); // Trust first proxy (required for Render/Heroku)
+
 const corsOptions = {
     origin: (origin, callback) => {
+        // Log the origin for debugging on Render
+        console.log('Incoming Request Origin:', origin);
+
         if (!origin) return callback(null, true);
+
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            console.log(`Blocked Origin: ${origin}`);
+            // Don't throw error, just don't return CORS headers
+            // This prevents 500 HTML errors
+            callback(null, false);
         }
     },
     credentials: true,
