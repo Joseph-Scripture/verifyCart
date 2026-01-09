@@ -24,9 +24,38 @@ import passwordResetRoutes from './src/routes/passwordResetRoutes.js'
 
 const app = express();
 
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Diagnostic: List all registered routes helper
+function listRoutes(stack, prefix = '') {
+    const routes = [];
+    if (!stack || !Array.isArray(stack)) return routes;
 
+    stack.forEach(layer => {
+        if (layer.route && layer.route.path) {
+            const methods = layer.route.methods ? Object.keys(layer.route.methods).join(',').toUpperCase() : 'UNKNOWN';
+            routes.push(`${methods} ${prefix}${layer.route.path}`);
+        } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+            let nextPrefix = prefix;
+            if (layer.regexp && layer.regexp.source) {
+                const routePath = layer.regexp.source
+                    .replace('^\\', '')
+                    .replace('\\/?(?=\\/|$)', '')
+                    .replace(/\\\//g, '/');
+                nextPrefix += routePath;
+            }
+            routes.push(...listRoutes(layer.handle.stack, nextPrefix));
+        }
+    });
+    return routes;
+}
 
+app.set('trust proxy', true); // Trust all proxies on Render
+
+// 1. Diagnostic Logging Middleware (MUST BE TOP)
+app.use((req, res, next) => {
+    console.log(`[Diagnostic] ${req.method} ${req.url}`);
+    console.log(`[Headers] Origin: ${req.headers.origin || 'undefined'} | Referer: ${req.headers.referer || 'undefined'}`);
+    next();
+});
 
 const allowedOrigins = [
     'https://verifycart.vercel.app',
@@ -34,21 +63,24 @@ const allowedOrigins = [
     'https://verify-chart-k8gq.vercel.app'
 ];
 
-app.set('trust proxy', 1); // Trust first proxy (required for Render/Heroku)
-
+// 2. Robust CORS Configuration
 const corsOptions = {
     origin: (origin, callback) => {
         // Log the origin for debugging on Render
-        console.log('Incoming Request Origin:', origin);
+        console.log('[CORS Filter] Incoming Request Origin:', origin);
 
-        if (!origin) return callback(null, true);
+        // Fail-safe for missing origin during redirects
+        const effectiveOrigin = origin || '';
 
-        if (allowedOrigins.includes(origin)) {
+        if (!effectiveOrigin) {
+            console.log('[CORS Filter] Allowing missing origin (likely direct or redirect)');
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(effectiveOrigin)) {
             callback(null, true);
         } else {
-            console.log(`Blocked Origin: ${origin}`);
-            // Don't throw error, just don't return CORS headers
-            // This prevents 500 HTML errors
+            console.log(`[CORS Filter] Blocked Origin: ${effectiveOrigin}`);
             callback(null, false);
         }
     },
@@ -64,6 +96,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser());
@@ -91,10 +124,19 @@ app.use('/api/auth', passwordResetRoutes)
 
 
 
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV }));
+
 const PORT = process.env.PORT || 3000;
-
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log('--- REGISTERED ROUTES ---');
+    if (app._router && app._router.stack) {
+        listRoutes(app._router.stack).forEach(r => console.log(`[Route] ${r}`));
+    } else if (app.router && app.router.stack) {
+        listRoutes(app.router.stack).forEach(r => console.log(`[Route] ${r}`));
+    } else {
+        console.log('[Route Audit] Could not access router stack');
+    }
+    console.log('-------------------------');
 });
