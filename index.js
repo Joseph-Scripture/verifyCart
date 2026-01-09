@@ -60,6 +60,15 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
+// Handle CORS preflight (OPTIONS) requests before authentication middleware
+// Using middleware instead of routes to avoid Express 5.x path-to-regexp issues
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return cors(corsOptions)(req, res, next);
+    }
+    next();
+});
+
 // Routes
 app.use('/api/auth', vendorAuthRoutes);
 app.use('/api/vendor', vendorVerificationRoutes);
