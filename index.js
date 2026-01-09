@@ -24,7 +24,7 @@ import passwordResetRoutes from './src/routes/passwordResetRoutes.js'
 
 const app = express();
 
-// Diagnostic: List all registered routes helper
+// Diagnostic: List all registered routes helper (Improved)
 function listRoutes(stack, prefix = '') {
     const routes = [];
     if (!stack || !Array.isArray(stack)) return routes;
@@ -36,11 +36,11 @@ function listRoutes(stack, prefix = '') {
         } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
             let nextPrefix = prefix;
             if (layer.regexp && layer.regexp.source) {
-                const routePath = layer.regexp.source
-                    .replace('^\\', '')
-                    .replace('\\/?(?=\\/|$)', '')
-                    .replace(/\\\//g, '/');
-                nextPrefix += routePath;
+                // Better regex extraction for Express 5
+                const match = layer.regexp.source.match(/^\^\\?\/([^\\/]+)/);
+                if (match) {
+                    nextPrefix += '/' + match[1];
+                }
             }
             routes.push(...listRoutes(layer.handle.stack, nextPrefix));
         }
@@ -48,7 +48,7 @@ function listRoutes(stack, prefix = '') {
     return routes;
 }
 
-app.set('trust proxy', true); // Trust all proxies on Render
+app.set('trust proxy', 1); // Trust first proxy
 
 // 1. Diagnostic Logging Middleware (MUST BE TOP)
 app.use((req, res, next) => {
@@ -95,6 +95,16 @@ const corsOptions = {
     ],
 };
 
+// Fix the proxy crash
+app.set('trust proxy', true); 
+
+// 1. Logging (For your eyes only)
+app.use((req, res, next) => {
+    console.log(`[Request] ${req.method} ${req.path}`);
+    next();
+});
+
+// 2. CORS (Must be before any routes or body parsers)
 app.use(cors(corsOptions));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
@@ -102,14 +112,6 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
-// Handle CORS preflight (OPTIONS) requests before authentication middleware
-// Using middleware instead of routes to avoid Express 5.x path-to-regexp issues
-app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-        return cors(corsOptions)(req, res, next);
-    }
-    next();
-});
 
 // Routes
 app.use('/api/auth', vendorAuthRoutes);
@@ -122,9 +124,32 @@ app.use('/api/vendor', vendorAnalyticsRoutes)
 app.use('/api/vendor', vendorProfileRoutes)
 app.use('/api/auth', passwordResetRoutes)
 
+// 3. 404 Handler with CORS headers
+app.use((req, res) => {
+    console.log(`[404 Error] No route for ${req.method} ${req.url}`);
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.status(404).json({
+        message: 'Route not found',
+        url: req.url,
+        method: req.method
+    });
+});
+
+// 4. Global Error Handler with CORS headers
+app.use((err, req, res, next) => {
+    console.error('[Global Error Cache]', err);
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({
+        message: err.message || 'Internal Server Error',
+        success: false
+    });
+});
 
 
-app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV }));
+
 
 const PORT = process.env.PORT || 3000;
 
