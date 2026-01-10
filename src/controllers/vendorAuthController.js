@@ -192,10 +192,10 @@ export const vendorLogin = async (req, res) => {
             vendorId: vendor.id,
             vendorName: vendor.name,
             vendorStatus: vendor.status,
-            vendorTrustScore:vendor.trustScore,
-            vendorBadgeId:vendor.badgeId,
-            vendorProfileImage:vendor.profileImage,
-            vendorBannerImage:vendor.bannerImage,
+            vendorTrustScore: vendor.trustScore,
+            vendorBadgeId: vendor.badgeId,
+            vendorProfileImage: vendor.profileImage,
+            vendorBannerImage: vendor.bannerImage,
 
         })
     } catch (error) {
@@ -278,3 +278,52 @@ export const adminLogin = async (req, res) => {
 }
 
 
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current logged in user details
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Not authenticated
+ */
+export const getMe = async (req, res) => {
+    try {
+        if (req.authType === 'VENDOR') {
+            return res.status(200).json({
+                success: true,
+                userType: 'VENDOR',
+                user: {
+                    id: req.vendor.id,
+                    name: req.vendor.name,
+                    email: req.vendor.email,
+                    businessName: req.vendor.businessName,
+                    status: req.vendor.status,
+                    trustScore: req.vendor.trustScore,
+                    badgeId: req.vendor.badgeId,
+                    profileImage: req.vendor.profileImage,
+                    bannerImage: req.vendor.bannerImage
+                }
+            });
+        }
+
+        if (req.authType === 'ADMIN') {
+            return res.status(200).json({
+                success: true,
+                userType: 'ADMIN',
+                user: {
+                    id: req.admin.id,
+                    email: req.admin.email,
+                }
+            });
+        }
+
+        return res.status(401).json({ message: 'Not authenticated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

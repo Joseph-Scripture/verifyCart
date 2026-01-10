@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { recalculateVendorVerificationState } from '../utils/recalculateVendorVerificationState.js';
+import { sendVerificationStatusEmail } from '../services/mailService.js';
 
 import { writeAuditlog } from '../utils/writeAuditlog.js';
 
@@ -119,6 +120,7 @@ export const reviewVerificationItem = async (req, res) => {
   try {
     const item = await prisma.verificationItem.findUnique({
       where: { id },
+      include: { vendor: true }
     });
 
     if (!item) {
@@ -152,6 +154,15 @@ export const reviewVerificationItem = async (req, res) => {
         badgeIssued: result.badgeIssued,
       },
     });
+
+    // Send email notification to vendor
+    await sendVerificationStatusEmail(
+      item.vendor.email,
+      item.vendor.name,
+      decision,
+      item.type,
+      note
+    );
 
     res.status(200).json({
       success: true,
@@ -318,6 +329,15 @@ export const revokeVendor = async (req, res) => {
         previousStatus: vendor.status,
       },
     });
+
+    // Send email notification to vendor
+    await sendVerificationStatusEmail(
+      vendor.email,
+      vendor.name,
+      'REVOKED',
+      '',
+      'Admin revoked your verified status'
+    );
 
     res.status(200).json({
       success: true,

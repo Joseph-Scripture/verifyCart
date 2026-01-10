@@ -95,14 +95,7 @@ const corsOptions = {
     ],
 };
 
-// Fix the proxy crash
-app.set('trust proxy', true); 
 
-// 1. Logging (For your eyes only)
-app.use((req, res, next) => {
-    console.log(`[Request] ${req.method} ${req.path}`);
-    next();
-});
 
 // 2. CORS (Must be before any routes or body parsers)
 app.use(cors(corsOptions));
@@ -155,13 +148,4 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('--- REGISTERED ROUTES ---');
-    if (app._router && app._router.stack) {
-        listRoutes(app._router.stack).forEach(r => console.log(`[Route] ${r}`));
-    } else if (app.router && app.router.stack) {
-        listRoutes(app.router.stack).forEach(r => console.log(`[Route] ${r}`));
-    } else {
-        console.log('[Route Audit] Could not access router stack');
-    }
-    console.log('-------------------------');
 });
