@@ -177,26 +177,29 @@ export const vendorLogin = async (req, res) => {
             });
             return res.status(401).json({ message: 'Invalid email or password' })
         }
-        await prisma.vendor.update({
+        const freshVendor = await prisma.vendor.update({
             where: { id: vendor.id },
             data: {
                 failedLoginAttempts: 0,
                 lockUntil: null
             }
         })
-        const token = generateToken({ vendorId: vendor.id, name: vendor.name }, res);
+        const token = generateToken({
+            vendorId: freshVendor.id,
+            name: freshVendor.name,
+            status: freshVendor.status
+        }, res);
         return res.status(200).json({
             success: true,
             message: 'Vendor logged in successfully',
             token,
-            vendorId: vendor.id,
-            vendorName: vendor.name,
-            vendorStatus: vendor.status,
-            vendorTrustScore: vendor.trustScore,
-            vendorBadgeId: vendor.badgeId,
-            vendorProfileImage: vendor.profileImage,
-            vendorBannerImage: vendor.bannerImage,
-
+            vendorId: freshVendor.id,
+            vendorName: freshVendor.name,
+            vendorStatus: freshVendor.status,
+            vendorTrustScore: freshVendor.trustScore,
+            vendorBadgeId: freshVendor.badgeId,
+            vendorProfileImage: freshVendor.profileImage,
+            vendorBannerImage: freshVendor.bannerImage,
         })
     } catch (error) {
         console.error(error);
@@ -293,19 +296,24 @@ export const adminLogin = async (req, res) => {
 export const getMe = async (req, res) => {
     try {
         if (req.authType === 'VENDOR') {
+            // Re-fetch to ensure absolute freshness
+            const freshVendor = await prisma.vendor.findUnique({
+                where: { id: req.vendor.id }
+            });
+
             return res.status(200).json({
                 success: true,
                 userType: 'VENDOR',
                 user: {
-                    id: req.vendor.id,
-                    name: req.vendor.name,
-                    email: req.vendor.email,
-                    businessName: req.vendor.businessName,
-                    status: req.vendor.status,
-                    trustScore: req.vendor.trustScore,
-                    badgeId: req.vendor.badgeId,
-                    profileImage: req.vendor.profileImage,
-                    bannerImage: req.vendor.bannerImage
+                    id: freshVendor.id,
+                    name: freshVendor.name,
+                    email: freshVendor.email,
+                    businessName: freshVendor.businessName,
+                    status: freshVendor.status,
+                    trustScore: freshVendor.trustScore,
+                    badgeId: freshVendor.badgeId,
+                    profileImage: freshVendor.profileImage,
+                    bannerImage: freshVendor.bannerImage
                 }
             });
         }

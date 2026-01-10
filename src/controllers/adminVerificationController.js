@@ -349,3 +349,113 @@ export const revokeVendor = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+/**
+ * @swagger
+ * /api/admin/verification:
+ *   get:
+ *     summary: Get all verification items (PENDING, APPROVED, REJECTED)
+ *     tags: [Admin Verification]
+ *     responses:
+ *       200:
+ *         description: List of all verification items
+ *       500:
+ *         description: Internal server error
+ */
+export const getAllVerificationItems = async (req, res) => {
+  try {
+    const items = await prisma.verificationItem.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+            status: true,
+            trustScore: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: items.length,
+      items,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/vendors/approved:
+ *   get:
+ *     summary: Get all approved (verified) vendors
+ *     tags: [Admin Verification]
+ *     responses:
+ *       200:
+ *         description: List of approved vendors
+ *       500:
+ *         description: Internal server error
+ */
+export const getApprovedVendors = async (req, res) => {
+  try {
+    const vendors = await prisma.vendor.findMany({
+      where: {
+        status: { in: ['VERIFIED', 'PARTIALLY_VERIFIED'] },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: vendors.length,
+      vendors,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/vendors/rejected:
+ *   get:
+ *     summary: Get all rejected or revoked vendors
+ *     tags: [Admin Verification]
+ *     responses:
+ *       200:
+ *         description: List of rejected/revoked vendors
+ *       500:
+ *         description: Internal server error
+ */
+export const getRejectedVendors = async (req, res) => {
+  try {
+    const vendors = await prisma.vendor.findMany({
+      where: {
+        status: { in: ['REVOKED'] }, // Assuming REVOKED is the status for rejected/blocked
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: vendors.length,
+      vendors,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
