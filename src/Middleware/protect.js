@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
+import generateToken from '../utils/generateToken.js';
 
 const protect = async (req, res, next) => {
   try {
@@ -23,6 +24,16 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Vendor not found' });
       }
 
+      // Check for stale status and refresh token if needed
+      if (decoded.status !== vendor.status) {
+        console.log(`[Auth] Refreshing stale token for vendor ${vendor.email}. Old status: ${decoded.status}, New status: ${vendor.status}`);
+        generateToken({
+          vendorId: vendor.id,
+          name: vendor.name,
+          status: vendor.status
+        }, res);
+      }
+
       req.vendor = vendor;
       req.authType = 'VENDOR';
       return next();
@@ -38,16 +49,16 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Admin not found' });
       }
 
-    req.admin = admin;
-    req.authType = 'ADMIN';
-    return next();
+      req.admin = admin;
+      req.authType = 'ADMIN';
+      return next();
     }
 
     return res.status(401).json({ message: 'Invalid token' });
 
   } catch (error) {
     return res.status(401).json({
-        message: 'Invalid or expired token',
+      message: 'Invalid or expired token',
     });
   }
 };

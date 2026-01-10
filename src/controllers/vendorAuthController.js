@@ -97,7 +97,11 @@ export const vendorSignup = async (req, res) => {
             },
         });
 
-        const token = generateToken({ vendorId: vendor.id, name: vendor.name }, res);
+        const token = generateToken({
+            vendorId: vendor.id,
+            name: vendor.name,
+            status: vendor.status
+        }, res);
 
         res.status(201).json({
             success: true,
@@ -296,24 +300,21 @@ export const adminLogin = async (req, res) => {
 export const getMe = async (req, res) => {
     try {
         if (req.authType === 'VENDOR') {
-            // Re-fetch to ensure absolute freshness
-            const freshVendor = await prisma.vendor.findUnique({
-                where: { id: req.vendor.id }
-            });
+            const vendor = req.vendor;
 
             return res.status(200).json({
                 success: true,
                 userType: 'VENDOR',
                 user: {
-                    id: freshVendor.id,
-                    name: freshVendor.name,
-                    email: freshVendor.email,
-                    businessName: freshVendor.businessName,
-                    status: freshVendor.status,
-                    trustScore: freshVendor.trustScore,
-                    badgeId: freshVendor.badgeId,
-                    profileImage: freshVendor.profileImage,
-                    bannerImage: freshVendor.bannerImage
+                    id: vendor.id,
+                    name: vendor.name,
+                    email: vendor.email,
+                    businessName: vendor.businessName,
+                    status: vendor.status,
+                    trustScore: vendor.trustScore,
+                    badgeId: vendor.badgeId,
+                    profileImage: vendor.profileImage,
+                    bannerImage: vendor.bannerImage
                 }
             });
         }
